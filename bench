@@ -1,0 +1,112 @@
+#!/bin/bash
+# Bionic Benchmark
+# Created by broodplank
+# Copyright (c) 2013 broodplank.net
+
+rm -Rf ${PWD}/.bionicbench
+mkdir ${PWD}/.bionicbench 
+if [[ $1 = "--install" ]]; then
+	echo "Installing on device..."
+	adb 'wait-for-device'
+	adb root
+	busybox sleep 1
+	adb remount
+	adb push bionic-benchmarks /system/bin/bionic-benchmarks
+	adb shell 'chmod 755 /system/bin/bionic-benchmarks'
+	echo "Done!"
+	echo "Please relaunch 'bench' without the --install parameter to benchmark"
+	exit
+fi;
+adb 'wait-for-device'
+clear
+echo ">>>> Bionic Benchmark v1.0 <<<<"
+echo
+echo " - visit at www.broodplank.net"
+echo
+echo "Waiting for device..."
+adb 'wait-for-device'
+echo "Device found"
+echo 
+echo "Preparing benchmark..."
+echo
+#Saving build id and check existance
+adb shell 'getprop ro.build.display.id > /sdcard/.bionicbench/buildid'
+adb pull /sdcard/.bionicbench/buildid .bionicbench/buildid
+adb shell 'ls /system/bin/bionic-benchmarks > /sdcard/.bionicbench/exist'
+adb pull /sdcard/.bionicbench/exist .bionicbench/exist
+export BUILDID=`cat ${PWD}/.bionicbench/buildid`;
+export CHECKEXIST=`cat ${PWD}/.bionicbench/exist`;
+export CHECK=`grep -r 'bionic-benchmarks' ${PWD}/.bionicbench/exist`;
+if [[ $CHECK = "" ]]; then
+	echo "Please run ./bench --install first!"
+	exit
+fi;
+echo 
+echo "Finished preparation!"
+echo
+echo 
+echo "Starting benchmark..."
+echo
+echo "Running Benchmark 1 of 5"
+echo ">> MEMCMP...."
+adb shell 'bionic-benchmarks BM_string_memcmp > /sdcard/.bionicbench/memcmp'
+echo ">> MEMCMP....Done!"
+echo
+echo "Running Benchmark 2 of 5"
+echo ">> MEMCPY...."
+adb shell 'bionic-benchmarks BM_string_memcpy > /sdcard/.bionicbench/memcpy'
+echo ">> MEMCPY....Done!"
+echo
+echo "Running Benchmark 3 of 5"
+echo ">> MEMMOVE..."
+adb shell 'bionic-benchmarks BM_string_memmove > /sdcard/.bionicbench/memmove'
+echo ">> MEMMOVE...Done!"
+echo
+echo "Running Benchmark 4 of 5"
+echo ">> MEMSET...."
+adb shell 'bionic-benchmarks BM_string_memset > /sdcard/.bionicbench/memset'
+echo ">> MEMSET....Done!"
+echo 
+echo "Running Benchmark 5 of 5"
+echo ">> STRLEN...."
+adb shell 'bionic-benchmarks BM_string_strlen > /sdcard/.bionicbench/strlen'
+echo ">> STRLEN....Done!"
+echo
+echo "Benchmarks completed, pulling data to pc..."
+echo 
+adb pull /sdcard/.bionicbench/memcmp .bionicbench/1
+adb pull /sdcard/.bionicbench/memcpy .bionicbench/2
+adb pull /sdcard/.bionicbench/memmove .bionicbench/3
+adb pull /sdcard/.bionicbench/memset .bionicbench/4
+adb pull /sdcard/.bionicbench/strlen .bionicbench/5
+echo
+echo "Processing data..."
+echo 
+paste -sd+ .bionicbench/1|bc > .bionicbench/1.total
+paste -sd+ .bionicbench/2|bc > .bionicbench/2.total
+paste -sd+ .bionicbench/3|bc > .bionicbench/3.total
+paste -sd+ .bionicbench/4|bc > .bionicbench/4.total
+paste -sd+ .bionicbench/5|bc > .bionicbench/5.total
+paste -sd+ .bionicbench/1.total .bionicbench/2.total .bionicbench/3.total .bionicbench/4.total .bionicbench/5.total|bc > .bionicbench/score.total
+paste -sd+ .bionicbench/score.total|bc > .bionicbench/score.final
+export BENCH1=`cat .bionicbench/1.total|awk '{print int($1+0.5)}'`;
+export BENCH2=`cat .bionicbench/2.total|awk '{print int($1+0.5)}'`;
+export BENCH3=`cat .bionicbench/3.total|awk '{print int($1+0.5)}'`;
+export BENCH4=`cat .bionicbench/4.total|awk '{print int($1+0.5)}'`;
+export BENCH5=`cat .bionicbench/5.total|awk '{print int($1+0.5)}'`;
+export BENCHTOTAL=`cat .bionicbench/score.final|awk '{print int($1+0.5)}'`;
+echo ">>>>>>>>> Score <<<<<<<<<<<"
+echo
+echo "- MEMCMP Score  : ${BENCH1}"
+echo "- MEMCPU Score  : ${BENCH2}"
+echo "- MEMMOVE Score : ${BENCH3}"
+echo "- MEMSET Score  : ${BENCH4}"
+echo "- STRLEN Score  : ${BENCH5}"
+echo
+echo "- Total Score   : ${BENCHTOTAL}"
+echo
+echo ">>>>>>>>>>>><<<<<<<<<<<<<<<"
+echo
+echo "Saving to log"
+echo -ne "Bionic Benchmark Result:\nBuild ID: ${BUILDID}\nMEMCMP Score: ${BENCH1}\nMEMCPU Score: ${BENCH2}\nMEMMOVE Score: ${BENCH3}\nMEMSET Score: ${BENCH4}\nSTRLEN Score: ${BENCH5}\n\nTotal Score: ${BENCHTOTAL}\n\n\n" > ${PWD}/bioniclog
+echo "Done!"
