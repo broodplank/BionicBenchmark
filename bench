@@ -108,5 +108,5 @@ echo
 echo ">>>>>>>>>>>><<<<<<<<<<<<<<<"
 echo
 echo "Saving to log"
-echo -ne "Bionic Benchmark Result:\nBuild ID: ${BUILDID}\nMEMCMP Score: ${BENCH1}\nMEMCPU Score: ${BENCH2}\nMEMMOVE Score: ${BENCH3}\nMEMSET Score: ${BENCH4}\nSTRLEN Score: ${BENCH5}\n\nTotal Score: ${BENCHTOTAL}\n\n\n" > ${PWD}/bioniclog
+echo -e "Bionic Benchmark Result:\nBuild ID: ${BUILDID}\nMEMCMP Score: ${BENCH1}\nMEMCPU Score: ${BENCH2}\nMEMMOVE Score: ${BENCH3}\nMEMSET Score: ${BENCH4}\nSTRLEN Score: ${BENCH5}\n\nTotal Score: ${BENCHTOTAL}\n\n\n" >> ${PWD}/bioniclog
 echo "Done!"
